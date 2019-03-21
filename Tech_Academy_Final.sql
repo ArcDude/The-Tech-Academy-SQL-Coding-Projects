@@ -215,7 +215,7 @@ INSERT INTO book_Loans
 	(106, 3, 1005, '2/15/2019', '3/01/2019'),--34
 	(107, 3, 1005, '3/01/2019', '3/14/2019'),--35
 	(108, 3, 1005, '3/14/2019', '3/28/2019'),--36
-	(109, 3, 1004, '3/14/2019', '3/28/2019'),--37
+	(109, 3, 1003, '3/14/2019', '3/28/2019'),--37
 	(110, 3, 1005, '3/15/2019', '3/29/2019'),--38
 	(105, 3, 1000, '2/01/2019', '2/15/2019'),--39
 	(106, 3, 1000, '2/15/2019', '3/01/2019'),--40
@@ -278,10 +278,13 @@ SELECT -- Query #2 Number of copies of "The Lost Tribe" in all Branches
 
 SELECT -- Query #3 Get all names of borrowers who do not have any books checked out
 	a1.borrower_name, a2.loans_card_no
-	FROM book_Loans a2
-	INNER JOIN borrower a1 ON a1.card_no = a2.loans_card_no
-	WHERE borrower_name IS NULL
+	FROM borrower a1
+	FULL OUTER JOIN book_Loans a2 ON a2.loans_card_no = a1.card_no
+	WHERE a2.loans_card_no IS NULL
 ; 
+
+SELECT * FROM book_Loans
+WHERE loans_card_no = 1004;
 
 
 
@@ -296,27 +299,21 @@ SELECT -- Query #4 Each book that is due today (3/19/2019 when this was written)
 ;
 
 SELECT -- Query #5 Get total number of books loaned from each branch
-	a1.branch_name, a2.loans_branch_id, a3.copies_book_id, a4.book_title , COUNT(DISTINCT loans_book_id) 
+	a1.branch_name, a2.loans_branch_id, COUNT(*) 
 	FROM book_Loans a2
 	INNER JOIN library_Branch a1 ON a1.branch_id = a2.loans_branch_id
-	INNER JOIN book_Copies a3 ON a3.copies_branch_id = a1.branch_id
-	INNER JOIN books a4 ON a4.book_id = a3.copies_book_id
-	WHERE branch_id IN
-	(SELECT branch_id FROM library_Branch
-	GROUP BY branch_id HAVING COUNT (branch_id) < 5)
-	GROUP BY  a1.branch_name, a2.loans_branch_id, a3.copies_book_id, a4.book_title
+	GROUP BY  a1.branch_name, a2.loans_branch_id
 ;
 
 
 SELECT -- Query #6 Get names and addresses of everyone who has more that 5 books checked out
-	a1.borrower_name, a1.borrower_address, a2.number_of_copies, a3.loans_card_no, COUNT (loans_card_no) 
-	FROM book_Copies a2
-	INNER JOIN book_Loans a3 ON a3.loans_branch_id = a2.copies_branch_id
-	INNER JOIN borrower a1 ON a1.card_no = a3.loans_card_no
+	a1.borrower_name, a1.borrower_address, a3.loans_card_no, COUNT (*) 
+	FROM borrower a1
+	INNER JOIN book_Loans a3 ON a3.loans_card_no = a1.card_no
 	WHERE loans_card_no IN
 	(SELECT loans_card_no FROM book_Loans
 	GROUP BY loans_card_no HAVING COUNT (loans_card_no) > 5)
-	GROUP BY a1.borrower_name, a1.borrower_address, a2.number_of_copies, a3.loans_card_no
+	GROUP BY a1.borrower_name, a1.borrower_address, a3.loans_card_no
 ; 
 
 SELECT --Query #7 Get number of copies of all books by Stephen King in the Central branch
